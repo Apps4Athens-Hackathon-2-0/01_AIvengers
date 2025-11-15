@@ -115,8 +115,3 @@ export function useAuth() {
     isAuthenticated: !!user
   }
 }
-    signIn: async () => {},
-    signUp: async () => {},
-    signOut: async () => {},
-  }
-}

@@ -1,10 +1,8 @@
-// Database schema for Supabase
-
-/*
-Run these SQL commands in Supabase SQL Editor to set up the database:
+-- Database schema for PolisPraxis - Supabase
+-- Run these SQL commands in Supabase SQL Editor
 
 -- Users table (extends Supabase auth.users)
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   name TEXT,
@@ -14,7 +12,7 @@ CREATE TABLE public.profiles (
 );
 
 -- Projects table
-CREATE TABLE public.projects (
+CREATE TABLE IF NOT EXISTS public.projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT,
@@ -32,7 +30,7 @@ CREATE TABLE public.projects (
 );
 
 -- Pledges table
-CREATE TABLE public.pledges (
+CREATE TABLE IF NOT EXISTS public.pledges (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   project_id UUID REFERENCES public.projects(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.profiles(id),
@@ -61,9 +59,8 @@ CREATE POLICY "Pledges viewable by project participants" ON public.pledges FOR S
 CREATE POLICY "Authenticated users can create pledges" ON public.pledges FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Indexes for performance
-CREATE INDEX idx_projects_status ON public.projects(status);
-CREATE INDEX idx_projects_category ON public.projects(category);
-CREATE INDEX idx_pledges_project ON public.pledges(project_id);
-CREATE INDEX idx_pledges_user ON public.pledges(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON public.projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_category ON public.projects(category);
+CREATE INDEX IF NOT EXISTS idx_pledges_project ON public.pledges(project_id);
+CREATE INDEX IF NOT EXISTS idx_pledges_user ON public.pledges(user_id);
 
-*/
