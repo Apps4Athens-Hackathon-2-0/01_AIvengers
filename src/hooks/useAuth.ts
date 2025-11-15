@@ -30,25 +30,91 @@
 
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, signIn as supabaseSignIn, signUp as supabaseSignUp, signOut as supabaseSignOut } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 export function useAuth() {
-  // TODO: Φτιάξε state για user, loading, error
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   
-  // TODO: Φτιάξε signUp function
+  // Check if user is logged in on mount
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    checkUser()
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [])
   
-  // TODO: Φτιάξε signIn function
+  const signUp = async (email: string, password: string, userData?: any) => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await supabaseSignUp(email, password, userData)
+      return data
+    } catch (err: any) {
+      setError(err.message)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
   
-  // TODO: Φτιάξε signOut function
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await supabaseSignIn(email, password)
+      setUser(data.user)
+      return data
+    } catch (err: any) {
+      setError(err.message)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
   
-  // TODO: Φτιάξε getCurrentUser function
-  
-  // TODO: useEffect για να ελέγχεις αν ο χρήστης είναι logged in
+  const signOut = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      await supabaseSignOut()
+      setUser(null)
+    } catch (err: any) {
+      setError(err.message)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
   
   return {
-    user: null,
-    loading: false,
-    error: null,
+    user,
+    loading,
+    error,
+    signUp,
+    signIn,
+    signOut,
+    isAuthenticated: !!user
+  }
+}
     signIn: async () => {},
     signUp: async () => {},
     signOut: async () => {},
