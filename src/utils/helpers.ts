@@ -67,3 +67,28 @@ export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
   return text.slice(0, maxLength) + '...'
 }
+
+
+export function formatTime(hours: number): string {
+  if (hours === 1) return '1 ώρα'
+  return `${hours} ώρες`
+}
+
+export function calculatePledgeProgress(
+  pledgedMoney: number, 
+  budgetNeeded: number
+): number {
+  if (budgetNeeded === 0) return 0
+  return Math.min(Math.round((pledgedMoney / budgetNeeded) * 100), 100)
+}
+
+export function getStatusColor(status: string): string {
+  const colors = {
+    pending_approval: 'bg-yellow-100 text-yellow-800',
+    approved: 'bg-green-100 text-green-800',
+    in_progress: 'bg-blue-100 text-blue-800',
+    completed: 'bg-purple-100 text-purple-800',
+    rejected: 'bg-red-100 text-red-800',
+  }
+  return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+}

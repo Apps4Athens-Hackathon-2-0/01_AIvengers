@@ -49,27 +49,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  // TODO: Πάρε projectId από query params
+  // 1. Πάρε projectId από query
+  const { searchParams } = new URL(request.url)
+  const projectId = searchParams.get('projectId')
   
-  // TODO: SELECT * FROM pledges WHERE project_id = xxx
+  // 2. Για τώρα, χρησιμοποίησε mock data!
+  import { mockPledges } from '@/lib/mockData'
   
-  // TODO: JOIN με users table
+  const filtered = projectId 
+    ? mockPledges.filter(p => p.projectId === projectId)
+    : mockPledges
   
-  // TODO: Return τα pledges
-  
-  return NextResponse.json({ pledges: [] })
+  return NextResponse.json({ pledges: filtered })
 }
 
 export async function POST(request: NextRequest) {
-  // TODO: Πάρε τα δεδομένα από request body
+  // 1. Πάρε τα data
+  const body = await request.json()
+  const { project_id, type, amount, hours, materials } = body
   
-  // TODO: VALIDATE τα δεδομένα (type, amount/hours/materials)
+  // 2. Validation
+  if (!project_id || !type) {
+    return NextResponse.json(
+      { error: 'Missing required fields' },
+      { status: 400 }
+    )
+  }
   
-  // TODO: Πάρε user_id από Supabase auth
+  if (type === 'money' && (!amount || amount <= 0)) {
+    return NextResponse.json(
+      { error: 'Amount must be greater than 0' },
+      { status: 400 }
+    )
+  }
   
-  // TODO: INSERT INTO pledges
+  // 3. Create pledge (για τώρα mock response)
+  const newPledge = {
+    id: Math.random().toString(),
+    projectId: project_id,
+    type,
+    amount,
+    hours,
+    materials,
+    status: 'confirmed',
+    createdAt: new Date()
+  }
   
-  // TODO: UPDATE το project (pledged_money, pledged_hours, κλπ)
-  
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ 
+    success: true, 
+    pledge: newPledge 
+  })
 }

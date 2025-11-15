@@ -56,53 +56,87 @@ export function usePledges(projectId?: string) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  // TODO: Φτιάξε fetchPledges function
+  // Fetch all pledges for a project
   const fetchPledges = async (projectId: string) => {
     setLoading(true)
+    setError(null)
     try {
-      // TODO: Call GET /api/pledges?projectId=xxx
-      // const response = await fetch(`/api/pledges?projectId=${projectId}`)
-      // const data = await response.json()
-      // setPledges(data.pledges)
+      const response = await fetch(`/api/pledges?projectId=${projectId}`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pledges')
+      }
+      
+      const data = await response.json()
+      setPledges(data.pledges || [])
     } catch (err) {
+      console.error('❌ Error fetching pledges:', err)
       setError('Failed to fetch pledges')
     } finally {
       setLoading(false)
     }
   }
   
-  // TODO: Φτιάξε fetchStats function - ΤΟ ΠΙΟ ΣΗΜΑΝΤΙΚΟ!
+  // Fetch stats for a project - ΤΟ ΠΙΟ ΣΗΜΑΝΤΙΚΟ!
   const fetchStats = async (projectId: string) => {
+    setError(null)
     try {
-      // TODO: Call GET /api/pledges/stats?projectId=xxx
-      // const response = await fetch(`/api/pledges/stats?projectId=${projectId}`)
-      // const data = await response.json()
-      // setStats(data.stats)
+      const response = await fetch(`/api/pledges/stats?projectId=${projectId}`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch stats')
+      }
+      
+      const data = await response.json()
+      console.log('📊 Stats fetched:', data.stats)
+      setStats(data.stats || null)
     } catch (err) {
+      console.error('❌ Error fetching stats:', err)
       setError('Failed to fetch stats')
     }
   }
   
-  // TODO: Φτιάξε createPledge function
+  // Create new pledge - THE WOW MOMENT!
   const createPledge = async (pledgeData: {
     project_id: string
     type: 'money' | 'time' | 'materials'
     amount?: number
     hours?: number
     materials?: string
+    description?: string
   }) => {
+    setLoading(true)
+    setError(null)
     try {
-      // TODO: Call POST /api/pledges
-      // const response = await fetch('/api/pledges', {
-      //   method: 'POST',
-      //   body: JSON.stringify(pledgeData)
-      // })
+      console.log('📥 Creating pledge:', pledgeData)
       
-      // Refresh pledges and stats
-      // await fetchPledges(pledgeData.project_id)
-      // await fetchStats(pledgeData.project_id)
+      const response = await fetch('/api/pledges', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(pledgeData)
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create pledge')
+      }
+      
+      const result = await response.json()
+      console.log('✅ Pledge created:', result)
+      
+      // Refresh pledges and stats immediately
+      await fetchPledges(pledgeData.project_id)
+      await fetchStats(pledgeData.project_id)
+      
+      return result
     } catch (err) {
-      setError('Failed to create pledge')
+      console.error('❌ Error creating pledge:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create pledge')
+      throw err
+    } finally {
+      setLoading(false)
     }
   }
   

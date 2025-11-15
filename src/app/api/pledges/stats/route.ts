@@ -52,39 +52,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  // TODO: Πάρε projectId από searchParams
   const { searchParams } = new URL(request.url)
   const projectId = searchParams.get('projectId')
   
-  // TODO: Validate projectId
   if (!projectId) {
     return NextResponse.json(
-      { error: 'Project ID is required' },
+      { error: 'Project ID required' },
       { status: 400 }
     )
   }
   
-  // TODO: SELECT SUM(amount), SUM(hours), COUNT(*) FROM pledges
+  // Χρησιμοποίησε mock data για τώρα
+  import { mockPledges, mockProjects } from '@/lib/mockData'
   
-  // TODO: SELECT budget_needed FROM projects WHERE id = projectId
+  const projectPledges = mockPledges.filter(p => p.projectId === projectId)
+  const project = mockProjects.find(p => p.id === projectId)
   
-  // TODO: Υπολόγισε το progress percentage
+  // Υπολόγισε totals
+  const total_money = projectPledges
+    .filter(p => p.type === 'money')
+    .reduce((sum, p) => sum + (p.amount || 0), 0)
   
-  // TODO: Υπολόγισε το breakdown (πόσα από κάθε type)
+  const total_hours = projectPledges
+    .filter(p => p.type === 'time')
+    .reduce((sum, p) => sum + (p.hours || 0), 0)
   
-  // TODO: Return τα stats
+  const total_materials = projectPledges
+    .filter(p => p.type === 'materials').length
+  
+  const progress_percentage = project 
+    ? Math.round((total_money / project.budgetNeeded) * 100)
+    : 0
   
   return NextResponse.json({
     stats: {
-      total_money: 0,
-      total_hours: 0,
-      total_materials: 0,
-      pledge_count: 0,
-      progress_percentage: 0,
+      total_money,
+      total_hours,
+      total_materials,
+      pledge_count: projectPledges.length,
+      progress_percentage,
       breakdown: {
-        money_pledges: 0,
-        time_pledges: 0,
-        materials_pledges: 0
+        money_pledges: projectPledges.filter(p => p.type === 'money').length,
+        time_pledges: projectPledges.filter(p => p.type === 'time').length,
+        materials_pledges: projectPledges.filter(p => p.type === 'materials').length,
       }
     }
   })
