@@ -45,58 +45,41 @@
 // COMMIT: "feat: implement pledges API - create and read"
 // ============================================
 
-// API route for pledges CRUD operations
+// MINIMAL WORKING VERSION - Pledges API
 import { NextRequest, NextResponse } from 'next/server'
+import { mockPledges } from '@/lib/mockData'
 
 export async function GET(request: NextRequest) {
-  // 1. Πάρε projectId από query
   const { searchParams } = new URL(request.url)
   const projectId = searchParams.get('projectId')
   
-  // 2. Για τώρα, χρησιμοποίησε mock data!
-  import { mockPledges } from '@/lib/mockData'
-  
   const filtered = projectId 
-    ? mockPledges.filter(p => p.projectId === projectId)
+    ? mockPledges.filter(p => String(p.projectId) === projectId)
     : mockPledges
   
   return NextResponse.json({ pledges: filtered })
 }
 
 export async function POST(request: NextRequest) {
-  // 1. Πάρε τα data
   const body = await request.json()
-  const { project_id, type, amount, hours, materials } = body
+  const { project_id, type, amount, hours, description } = body
   
-  // 2. Validation
   if (!project_id || !type) {
-    return NextResponse.json(
-      { error: 'Missing required fields' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
   }
   
-  if (type === 'money' && (!amount || amount <= 0)) {
-    return NextResponse.json(
-      { error: 'Amount must be greater than 0' },
-      { status: 400 }
-    )
-  }
-  
-  // 3. Create pledge (για τώρα mock response)
   const newPledge = {
-    id: Math.random().toString(),
-    projectId: project_id,
+    id: Date.now(),
+    projectId: parseInt(project_id),
+    userId: 1,
     type,
-    amount,
-    hours,
-    materials,
+    amount: amount || 0,
+    hours: hours || 0,
+    description: description || '',
     status: 'confirmed',
-    createdAt: new Date()
+    createdAt: new Date().toISOString()
   }
   
-  return NextResponse.json({ 
-    success: true, 
-    pledge: newPledge 
-  })
+  return NextResponse.json({ success: true, pledge: newPledge })
 }
+

@@ -50,6 +50,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { mockPledges, mockProjects } from '@/lib/mockData'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -62,11 +63,8 @@ export async function GET(request: NextRequest) {
     )
   }
   
-  // Χρησιμοποίησε mock data για τώρα
-  import { mockPledges, mockProjects } from '@/lib/mockData'
-  
-  const projectPledges = mockPledges.filter(p => p.projectId === projectId)
-  const project = mockProjects.find(p => p.id === projectId)
+  const projectPledges = mockPledges.filter(p => String(p.projectId) === projectId)
+  const project = mockProjects.find(p => String(p.id) === projectId)
   
   // Υπολόγισε totals
   const total_money = projectPledges

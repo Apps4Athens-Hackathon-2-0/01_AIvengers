@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import 'leaflet/dist/leaflet.css';
-
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
@@ -26,25 +24,6 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@layer components {
-  .glassmorphism {
-    @apply backdrop-blur-lg bg-white/10 border border-white/20;
-  }
-  
-  .leaflet-popup-content-wrapper {
-    @apply rounded-lg shadow-lg;
-  }
 }
 
 @keyframes fadeIn {
