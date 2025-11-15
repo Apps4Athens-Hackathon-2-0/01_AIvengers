@@ -30,20 +30,57 @@
 
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase, signIn as supabaseSignIn, signUp as supabaseSignUp, signOut as supabaseSignOut } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+
+// Mock user type (not using Supabase for now)
+export interface AppUser {
+  id: string
+  email: string
+  name?: string
+  phone?: string
+  role?: string
+}
+
+// Mock demo users
+const DEMO_USERS = [
+  {
+    id: 'citizen-1',
+    email: 'citizen@helpmeanytime.gr',
+    password: 'Demo123!',
+    name: 'Γιώργος Παπαδόπουλος',
+    phone: '210 123 4567',
+    role: 'citizen'
+  },
+  {
+    id: 'professional-1',
+    email: 'professional@helpmeanytime.gr',
+    password: 'Demo123!',
+    name: 'Νίκος Ηλεκτρολόγος',
+    phone: '210 234 5678',
+    role: 'professional'
+  },
+  {
+    id: 'admin-1',
+    email: 'admin@athens.gov.gr',
+    password: 'Admin123!',
+    name: 'Μαρία Δημητρίου',
+    phone: '210 345 6789',
+    role: 'municipality'
+  }
+]
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Check if user is logged in on mount
+  // Check if user is logged in on mount (from localStorage)
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUser = () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        setUser(session?.user ?? null)
+        const storedUser = localStorage.getItem('helpmeanytime_user')
+        if (storedUser) {
+          setUser(JSON.parse(storedUser))
+        }
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -52,25 +89,31 @@ export function useAuth() {
     }
     
     checkUser()
-    
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-    
-    return () => subscription.unsubscribe()
   }, [])
   
   const signUp = async (email: string, password: string, userData?: any) => {
     try {
       setLoading(true)
       setError(null)
-      const data = await supabaseSignUp(email, password, userData)
-      return data
+      
+      // Mock signup - accept any email/password
+      const newUser: AppUser = {
+        id: `user-${Date.now()}`,
+        email,
+        name: userData?.name || email.split('@')[0],
+        phone: userData?.phone || '',
+        role: 'citizen'
+      }
+      
+      // Store in localStorage
+      localStorage.setItem('helpmeanytime_user', JSON.stringify(newUser))
+      setUser(newUser)
+      
+      return { success: true, data: { user: newUser }, error: null }
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      const errorMessage = err.message || 'Κάτι πήγε στραβά'
+      setError(errorMessage)
+      return { success: false, data: null, error: errorMessage }
     } finally {
       setLoading(false)
     }
@@ -80,12 +123,34 @@ export function useAuth() {
     try {
       setLoading(true)
       setError(null)
-      const data = await supabaseSignIn(email, password)
-      setUser(data.user)
-      return data
+      
+      // Check demo users first
+      const demoUser = DEMO_USERS.find(u => u.email === email && u.password === password)
+      
+      if (demoUser) {
+        const { password: _, ...userWithoutPassword } = demoUser
+        const loggedUser: AppUser = userWithoutPassword
+        localStorage.setItem('helpmeanytime_user', JSON.stringify(loggedUser))
+        setUser(loggedUser)
+        return { success: true, data: { user: loggedUser }, error: null }
+      }
+      
+      // If not a demo user, accept any credentials (mock mode)
+      const mockUser: AppUser = {
+        id: `user-${Date.now()}`,
+        email,
+        name: email.split('@')[0],
+        role: 'citizen'
+      }
+      
+      localStorage.setItem('helpmeanytime_user', JSON.stringify(mockUser))
+      setUser(mockUser)
+      return { success: true, data: { user: mockUser }, error: null }
+      
     } catch (err: any) {
-      setError(err.message)
-      throw err
+      const errorMessage = err.message || 'Κάτι πήγε στραβά'
+      setError(errorMessage)
+      return { success: false, data: null, error: errorMessage }
     } finally {
       setLoading(false)
     }
@@ -95,7 +160,7 @@ export function useAuth() {
     try {
       setLoading(true)
       setError(null)
-      await supabaseSignOut()
+      localStorage.removeItem('helpmeanytime_user')
       setUser(null)
     } catch (err: any) {
       setError(err.message)

@@ -1,5 +1,5 @@
 // Constants and configuration
-export const APP_NAME = 'PolisPraxis'
+export const APP_NAME = 'HelpMeAnytime'
 export const APP_DESCRIPTION = 'Bridging Citizens & Municipality for Collaborative Civic Projects'
 
 // Athens coordinates
