@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 import { Calendar, Clock, MapPin, Euro, Check, X, AlertCircle, Plus, ArrowLeft, RotateCcw } from 'lucide-react'
 
 // Simple booking interface for demo
@@ -70,17 +71,30 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function MyBookingsPage() {
   const router = useRouter()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const [bookings, setBookings] = useState<SimpleBooking[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
 
-  // Fetch bookings for the demo user
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/auth?mode=signin&redirect=/bookings')
+    }
+  }, [authLoading, isAuthenticated, router])
+
+  // Fetch bookings for the current user
   const fetchBookings = async () => {
+    if (!user?.id) {
+      console.log('❌ No user ID available')
+      setLoading(false)
+      return
+    }
+    
     try {
       setLoading(true)
-      console.log('🔍 Fetching bookings for user: user-citizen-1')
-      // Use the demo citizen ID
-      const response = await fetch('/api/bookings?citizenId=user-citizen-1')
+      console.log('🔍 Fetching bookings for user:', user.id)
+      const response = await fetch(`/api/bookings?citizenId=${user.id}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch bookings')
@@ -98,6 +112,11 @@ export default function MyBookingsPage() {
   }
 
   useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      console.log('⏳ Waiting for user authentication...')
+      return
+    }
+    
     fetchBookings()
     
     // Auto refresh when window gains focus (user returns to the page)
@@ -121,7 +140,7 @@ export default function MyBookingsPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [isAuthenticated, user?.id])
 
   const filteredBookings = filter === 'all' 
     ? bookings 
