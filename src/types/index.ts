@@ -170,12 +170,14 @@ export interface Project {
   creator?: User
   budgetNeeded: number
   budgetPledged: number
+  pledgeCount: number
   images?: string[]
   pledges?: Pledge[]
   municipalityApproved: boolean
   municipalityNotes?: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string
+  updatedAt: string
+  completedAt?: string
 }
 
 export interface Pledge {

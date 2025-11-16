@@ -19,6 +19,19 @@ const categoryLabels: Record<string, string> = {
   other: 'Άλλο',
 }
 
+// Category icons (minimal design - no emojis, using text)
+const categoryIcons: Record<string, string> = {
+  moving: '📦',
+  technology: '💻',
+  companionship: '👥',
+  shopping: '🛒',
+  paperwork: '📄',
+  home_maintenance: '🔧',
+  childcare: '👶',
+  pet_care: '🐕',
+  other: '•',
+}
+
 const urgencyLabels: Record<string, string> = {
   low: 'Χαμηλή',
   medium: 'Μέτρια',
@@ -29,18 +42,6 @@ const urgencyColors: Record<string, string> = {
   low: 'bg-blue-100 text-blue-800 border-blue-200',
   medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   high: 'bg-red-100 text-red-800 border-red-200',
-}
-
-const categoryIcons: Record<string, string> = {
-  moving: '📦',
-  technology: '💻',
-  companionship: '🤝',
-  shopping: '🛒',
-  paperwork: '📄',
-  home_maintenance: '🔧',
-  childcare: '👶',
-  pet_care: '🐾',
-  other: '❓',
 }
 
 export default function HelpRequestsPage() {
@@ -71,7 +72,7 @@ export default function HelpRequestsPage() {
     setAssigning(null)
 
     if (success) {
-      alert('Ευχαριστούμε! Η βοήθειά σας καταχωρήθηκε επιτυχώς. 🎉')
+      alert('Ευχαριστούμε! Η βοήθειά σας καταχωρήθηκε επιτυχώς.')
       fetchRequests({ status: 'open' }) // Refresh list
     }
   }

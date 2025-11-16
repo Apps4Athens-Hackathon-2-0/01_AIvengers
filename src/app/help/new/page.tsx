@@ -1,22 +1,22 @@
 // New Help Request Form - Νέο Αίτημα Βοήθειας
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useHelpRequests } from '@/hooks/useHelpRequests'
 import { Heart, MapPin, Calendar, Phone, Check, ArrowLeft, AlertCircle } from 'lucide-react'
 
 const categories = [
-  { value: 'moving', label: 'Μετακόμιση/Μεταφορά', icon: '📦', description: 'Βοήθεια με μετακόμιση ή μεταφορά αντικειμένων' },
-  { value: 'technology', label: 'Τεχνολογία', icon: '💻', description: 'Υποστήριξη με υπολογιστές, κινητά, internet' },
-  { value: 'companionship', label: 'Συντροφιά', icon: '🤝', description: 'Συντροφιά σε ηλικιωμένους ή μοναχικά άτομα' },
-  { value: 'shopping', label: 'Ψώνια', icon: '🛒', description: 'Βοήθεια με ψώνια ή αγορές' },
-  { value: 'paperwork', label: 'Γραφειοκρατία', icon: '📄', description: 'Συμπλήρωση εντύπων, επίσκεψη σε υπηρεσίες' },
-  { value: 'home_maintenance', label: 'Συντήρηση Σπιτιού', icon: '🔧', description: 'Μικρές επιδιορθώσεις και συντήρηση' },
-  { value: 'childcare', label: 'Φύλαξη Παιδιών', icon: '👶', description: 'Προσωρινή φύλαξη παιδιών' },
-  { value: 'pet_care', label: 'Φροντίδα Κατοικιδίων', icon: '🐾', description: 'Βόλτα ή φύλαξη κατοικιδίων' },
-  { value: 'other', label: 'Άλλο', icon: '❓', description: 'Άλλο είδος βοήθειας' },
+  { value: 'moving', label: 'Μετακόμιση/Μεταφορά', description: 'Βοήθεια με μετακόμιση ή μεταφορά αντικειμένων', icon: '📦' },
+  { value: 'technology', label: 'Τεχνολογία', description: 'Υποστήριξη με υπολογιστές, κινητά, internet', icon: '💻' },
+  { value: 'companionship', label: 'Συντροφιά', description: 'Συντροφιά σε ηλικιωμένους ή μοναχικά άτομα', icon: '👥' },
+  { value: 'shopping', label: 'Ψώνια', description: 'Βοήθεια με ψώνια ή αγορές', icon: '🛒' },
+  { value: 'paperwork', label: 'Γραφειοκρατία', description: 'Συμπλήρωση εντύπων, επίσκεψη σε υπηρεσίες', icon: '📄' },
+  { value: 'home_maintenance', label: 'Συντήρηση Σπιτιού', description: 'Μικρές επιδιορθώσεις και συντήρηση', icon: '🔧' },
+  { value: 'childcare', label: 'Φύλαξη Παιδιών', description: 'Προσωρινή φύλαξη παιδιών', icon: '👶' },
+  { value: 'pet_care', label: 'Φροντίδα Κατοικιδίων', description: 'Βόλτα ή φύλαξη κατοικιδίων', icon: '🐕' },
+  { value: 'other', label: 'Άλλο', description: 'Άλλο είδος βοήθειας', icon: '•' },
 ]
 
 const urgencyLevels = [
@@ -27,7 +27,7 @@ const urgencyLevels = [
 
 export default function NewHelpRequestPage() {
   const router = useRouter()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const { createRequest, loading } = useHelpRequests()
 
   const [category, setCategory] = useState('')
@@ -37,6 +37,26 @@ export default function NewHelpRequestPage() {
   const [phoneNumber, setPhoneNumber] = useState(user?.phone || '')
   const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium')
   const [submitted, setSubmitted] = useState(false)
+
+  // Redirect if not authenticated (only after loading is complete)
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      console.log('❌ User not authenticated, redirecting to /auth')
+      router.push('/auth?mode=signin&redirect=/help/new')
+    }
+  }, [authLoading, isAuthenticated, router])
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Φόρτωση...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -179,7 +199,7 @@ export default function NewHelpRequestPage() {
                 rows={5}
                 required
                 placeholder="Περιγράψτε λεπτομερώς την βοήθεια που χρειάζεστε..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition resize-none text-gray-900 bg-white placeholder:text-gray-500"
               />
             </div>
 
@@ -217,7 +237,7 @@ export default function NewHelpRequestPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="π.χ. Κέντρο Αθήνας, Κολωνάκι"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition text-gray-900 bg-white placeholder:text-gray-500"
               />
             </div>
 
@@ -232,7 +252,7 @@ export default function NewHelpRequestPage() {
                 value={preferredDate}
                 onChange={(e) => setPreferredDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition text-gray-900 bg-white"
               />
             </div>
 
@@ -248,7 +268,7 @@ export default function NewHelpRequestPage() {
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 required
                 placeholder="210 123 4567"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition text-gray-900 bg-white placeholder:text-gray-500"
               />
               <p className="text-sm text-gray-500 mt-1">
                 Οι εθελοντές θα χρησιμοποιήσουν αυτό το τηλέφωνο για να επικοινωνήσουν μαζί σας

@@ -1,29 +1,12 @@
-// My Bookings Page - Τα Ραντεβού Μου (Working Demo Version)
+// My Bookings Page - Τα Ραντεβού Μου
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calendar, Clock, MapPin, Euro, Check, X, AlertCircle, Plus, ArrowLeft, RotateCcw } from 'lucide-react'
-
-// Simple booking interface for demo
-interface SimpleBooking {
-  id: string
-  citizenId: string
-  professionalId: string
-  professionalName?: string
-  profession?: string
-  serviceType: string
-  scheduledDate: string
-  scheduledTime: string
-  durationHours: number
-  address: string
-  description: string
-  status: string
-  basePrice: number
-  municipalitySubsidy: number
-  citizenPays: number
-  createdAt: string
-}
+import { useAuth } from '@/hooks/useAuth'
+import { useBookings } from '@/hooks/useBookings'
+import { useProfessionals } from '@/hooks/useProfessionals'
+import { Calendar, Clock, MapPin, Euro, Check, X, AlertCircle, Plus, ArrowLeft } from 'lucide-react'
 
 const professionLabels: Record<string, string> = {
   electrician: 'Ηλεκτρολόγος',
@@ -36,33 +19,27 @@ const professionLabels: Record<string, string> = {
   cleaner: 'Καθαριστής/Καθαρίστρια',
   locksmith: 'Κλειδαράς',
   appliance_repair: 'Επισκευή Συσκευών',
-  electrical: 'Ηλεκτρολογικά',
-  plumbing: 'Υδραυλικά',
-  general: 'Γενικά',
 }
 
 const statusLabels: Record<string, string> = {
   pending: 'Εκκρεμεί',
-  approved: 'Εγκρίθηκε', 
-  confirmed: 'Επιβεβαιώθηκε',
+  approved: 'Εγκρίθηκε',
   rejected: 'Απορρίφθηκε',
   completed: 'Ολοκληρώθηκε',
   cancelled: 'Ακυρώθηκε',
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-warning-50 text-warning-700 border-warning-200',
-  approved: 'bg-success-50 text-success-700 border-success-200', 
-  confirmed: 'bg-accent-50 text-accent-700 border-accent-200',
-  rejected: 'bg-danger-50 text-danger-700 border-danger-200',
-  completed: 'bg-success-50 text-success-600 border-success-200',
-  cancelled: 'bg-neutral-100 text-neutral-600 border-neutral-200',
+  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  approved: 'bg-green-100 text-green-800 border-green-200',
+  rejected: 'bg-red-100 text-red-800 border-red-200',
+  completed: 'bg-blue-100 text-blue-800 border-blue-200',
+  cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
 }
 
 const statusIcons: Record<string, React.ReactNode> = {
   pending: <AlertCircle className="w-4 h-4" />,
   approved: <Check className="w-4 h-4" />,
-  confirmed: <Check className="w-4 h-4" />,
   rejected: <X className="w-4 h-4" />,
   completed: <Check className="w-4 h-4" />,
   cancelled: <X className="w-4 h-4" />,
@@ -70,58 +47,72 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function MyBookingsPage() {
   const router = useRouter()
-  const [bookings, setBookings] = useState<SimpleBooking[]>([])
+  const { user, isAuthenticated } = useAuth()
+  // const { bookings, loading, fetchMyBookings } = useBookings() // Commented out for demo
+  const { professionals, fetchProfessionals } = useProfessionals()
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'completed'>('all')
+  
+  // Demo state
+  const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
-
-  // Fetch bookings for the demo user
-  const fetchBookings = async () => {
-    try {
-      setLoading(true)
-      console.log('🔍 Fetching bookings for user: user-citizen-1')
-      // Use the demo citizen ID
-      const response = await fetch('/api/bookings?citizenId=user-citizen-1')
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch bookings')
-      }
-
-      const data = await response.json()
-      console.log('📋 Fetched bookings:', data)
-      setBookings(data.bookings || [])
-    } catch (error) {
-      console.error('❌ Error fetching bookings:', error)
-      setBookings([])
-    } finally {
-      setLoading(false)
-    }
-  }
 
   useEffect(() => {
-    fetchBookings()
+    // For demo purposes, we'll skip auth check and load mock data
+    // if (!isAuthenticated) {
+    //   router.push('/auth?mode=signin')
+    //   return
+    // }
     
-    // Auto refresh when window gains focus (user returns to the page)
-    const handleFocus = () => {
-      console.log('🔄 Window focused - refreshing bookings')
-      fetchBookings()
-    }
-    
-    // Auto refresh when page becomes visible (tab switching)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('🔄 Page became visible - refreshing bookings')
-        fetchBookings()
+    // Load mock data for demo
+    const mockBookingsData = [
+      {
+        id: '1',
+        citizenId: 'citizen-1',
+        professionalId: 'prof-1',
+        serviceType: 'electrician',
+        scheduledDate: new Date('2024-12-20'),
+        scheduledTime: '10:00',
+        durationHours: 2,
+        address: 'Πλατεία Εξαρχείων 15, Αθήνα',
+        description: 'Επισκευή ηλεκτρολογικής εγκατάστασης',
+        status: 'pending' as const,
+        basePrice: 80,
+        municipalitySubsidy: 56,
+        citizenPays: 24,
+        createdAt: new Date('2024-11-15'),
+        updatedAt: new Date('2024-11-15')
+      },
+      {
+        id: '2',
+        citizenId: 'citizen-1',
+        professionalId: 'prof-2', 
+        serviceType: 'plumber',
+        scheduledDate: new Date('2024-12-22'),
+        scheduledTime: '14:00',
+        durationHours: 3,
+        address: 'Ακαδημίας 50, Αθήνα',
+        description: 'Επισκευή βρύσης κουζίνας',
+        status: 'approved' as const,
+        basePrice: 120,
+        municipalitySubsidy: 84,
+        citizenPays: 36,
+        createdAt: new Date('2024-11-10'),
+        updatedAt: new Date('2024-11-12')
       }
-    }
+    ]
     
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    // Simulate loading
+    setTimeout(() => {
+      setBookings(mockBookingsData)
+      setLoading(false)
+    }, 1000)
     
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
+    fetchProfessionals({ approved: true })
   }, [])
+
+  const getProfessional = (professionalId: string) => {
+    return professionals.find(p => p.id === professionalId)
+  }
 
   const filteredBookings = filter === 'all' 
     ? bookings 
@@ -129,102 +120,87 @@ export default function MyBookingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-primary-600">Φόρτωση ραντεβού...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Φόρτωση ραντεβού...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-4 sm:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-4 mb-6">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
             <button
               onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-2 text-primary-600 hover:text-primary-900 transition font-medium"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Πίσω στο Dashboard</span>
             </button>
-            <span className="text-neutral-300">|</span>
+            <span className="text-gray-400">|</span>
             <button
               onClick={() => router.push('/')}
-              className="flex items-center gap-2 text-primary-600 hover:text-primary-900 transition font-medium"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>Αρχική Σελίδα</span>
             </button>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-4 mb-3">
-                <h1 className="text-4xl font-bold text-primary-900">
-                  Τα Ραντεβού Μου
-                </h1>
-                <span className="bg-primary-900 text-white px-4 py-2 rounded-full text-lg font-bold shadow-soft">
-                  {bookings.length}
-                </span>
-              </div>
-              <p className="text-primary-600 text-lg leading-relaxed">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                Τα Ραντεβού Μου
+              </h1>
+              <p className="text-gray-600">
                 Διαχειριστείτε τα ραντεβού σας με επαγγελματίες
               </p>
             </div>
-            <div className="flex gap-4">
-              <button
-                onClick={fetchBookings}
-                disabled={loading}
-                className="flex items-center gap-2 bg-white border border-neutral-200 text-primary-700 px-6 py-3 rounded-xl font-medium hover:bg-neutral-50 transition disabled:opacity-50 shadow-card"
-              >
-                <RotateCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Ανανέωση
-              </button>
-              <button
-                onClick={() => router.push('/bookings/new')}
-                className="flex items-center gap-2 bg-primary-900 text-white px-8 py-3 rounded-xl font-semibold hover:bg-primary-800 transition shadow-soft hover:shadow-card"
-              >
-                <Plus className="w-5 h-5" />
-                Νέο Ραντεβού
-              </button>
-            </div>
+            <button
+              onClick={() => router.push('/bookings/new')}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg"
+            >
+              <Plus className="w-5 h-5" />
+              Νέο Ραντεβού
+            </button>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-10">
+        <div className="flex flex-wrap gap-3 mb-8">
           <button
             onClick={() => setFilter('all')}
-            className={`px-6 py-3 rounded-xl font-medium transition ${
+            className={`px-4 py-2 rounded-lg font-medium transition ${
               filter === 'all'
-                ? 'bg-primary-900 text-white shadow-soft'
-                : 'bg-white text-primary-700 hover:bg-neutral-50 border border-neutral-200'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
             Όλα ({bookings.length})
           </button>
           <button
             onClick={() => setFilter('pending')}
-            className={`px-6 py-3 rounded-xl font-medium transition ${
+            className={`px-4 py-2 rounded-lg font-medium transition ${
               filter === 'pending'
-                ? 'bg-warning-600 text-white shadow-soft'
-                : 'bg-white text-primary-700 hover:bg-neutral-50 border border-neutral-200'
+                ? 'bg-yellow-500 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
             Εκκρεμεί ({bookings.filter(b => b.status === 'pending').length})
           </button>
           <button
-            onClick={() => setFilter('confirmed')}
-            className={`px-6 py-3 rounded-xl font-medium transition ${
-              filter === 'confirmed'
-                ? 'bg-success-600 text-white shadow-soft'
-                : 'bg-white text-primary-700 hover:bg-neutral-50 border border-neutral-200'
+            onClick={() => setFilter('approved')}
+            className={`px-4 py-2 rounded-lg font-medium transition ${
+              filter === 'approved'
+                ? 'bg-green-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
-            Επιβεβαιώθηκε ({bookings.filter(b => b.status === 'confirmed').length})
+            Εγκρίθηκε ({bookings.filter(b => b.status === 'approved').length})
           </button>
           <button
             onClick={() => setFilter('completed')}
@@ -259,11 +235,17 @@ export default function MyBookingsPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {filteredBookings.map((booking) => {
-              const formattedDate = new Date(booking.scheduledDate).toLocaleDateString('el-GR', {
+              const professional = getProfessional(booking.professionalId)
+              const appointmentDate = new Date(booking.appointmentDate)
+              const formattedDate = appointmentDate.toLocaleDateString('el-GR', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
+              })
+              const formattedTime = appointmentDate.toLocaleTimeString('el-GR', {
+                hour: '2-digit',
+                minute: '2-digit',
               })
 
               return (
@@ -277,10 +259,10 @@ export default function MyBookingsPage() {
                       <div className="flex items-start justify-between mb-4">
                         <div>
                           <h3 className="text-xl font-bold text-gray-800 mb-1">
-                            {booking.professionalName || `Επαγγελματίας #${booking.professionalId}`}
+                            {professional?.name || 'Επαγγελματίας'}
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {professionLabels[booking.profession || booking.serviceType] || booking.serviceType}
+                            {professional ? professionLabels[professional.profession] : ''}
                           </p>
                         </div>
                         <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm font-medium ${statusColors[booking.status]}`}>
@@ -296,14 +278,14 @@ export default function MyBookingsPage() {
                             <p className="font-medium">{formattedDate}</p>
                             <p className="text-gray-500 flex items-center gap-1">
                               <Clock className="w-4 h-4" />
-                              {booking.scheduledTime}
+                              {formattedTime}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-3 text-sm text-gray-700">
                           <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                          <p>{booking.address}</p>
+                          <p>{booking.serviceAddress}</p>
                         </div>
 
                         {booking.description && (
@@ -323,7 +305,7 @@ export default function MyBookingsPage() {
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Ώρες:</span>
-                          <span className="font-medium">{booking.durationHours}h</span>
+                          <span className="font-medium">{booking.estimatedHours}h</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Σύνολο:</span>
@@ -347,6 +329,20 @@ export default function MyBookingsPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Rating Section (for completed) */}
+                      {booking.status === 'completed' && professional && (
+                        <div className="mt-4 pt-4 border-t border-gray-300">
+                          <p className="text-xs text-gray-600 mb-1">Αξιολόγηση</p>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={i < Math.floor(professional.rating) ? 'text-yellow-400' : 'text-gray-300'}>
+                                ★
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -358,7 +354,7 @@ export default function MyBookingsPage() {
         {/* Info Section */}
         <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
           <h3 className="text-lg font-bold text-gray-800 mb-4">
-            💡 Πληροφορίες Κρατήσεων
+            Πληροφορίες Κρατήσεων
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
             <div>
@@ -368,9 +364,9 @@ export default function MyBookingsPage() {
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Κατάσταση "Επιβεβαιώθηκε"</h4>
+              <h4 className="font-semibold mb-2">Κατάσταση "Εγκρίθηκε"</h4>
               <p className="text-gray-600">
-                Η επιδότηση εγκρίθηκε! Ο επαγγελματίας θα έρθει στην ημερομηνία που ορίσατε.
+                Η επιδότηση εγκρίθηκε! Ο επαγγελματίας θα επικοινωνήσει μαζί σας για επιβεβαίωση.
               </p>
             </div>
             <div>

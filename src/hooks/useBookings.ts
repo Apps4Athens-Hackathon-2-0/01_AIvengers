@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from './useAuth'
 
 export interface Booking {
   id: string
@@ -30,6 +31,7 @@ export interface Booking {
 }
 
 export function useBookings() {
+  const { user } = useAuth() // Get current user
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -90,7 +92,7 @@ export function useBookings() {
 
       // Transform to API format
       const apiData = {
-        citizenId: bookingData.citizenId || 'current-user-id', // TODO: Get from auth
+        citizenId: bookingData.citizenId || user?.email || 'user-citizen-1', // Use current user email
         professionalId: bookingData.professionalId,
         serviceType: bookingData.serviceType || 'general',
         scheduledDate: bookingData.scheduledDate || bookingData.appointmentDate?.split('T')[0] || '',
@@ -99,6 +101,8 @@ export function useBookings() {
         address: bookingData.address || bookingData.serviceAddress || '',
         description: bookingData.description || '',
       }
+
+      console.log('Creating booking with data:', apiData)
 
       const response = await fetch('/api/bookings', {
         method: 'POST',
@@ -114,9 +118,11 @@ export function useBookings() {
       }
 
       const data = await response.json()
+      console.log('Booking created successfully:', data)
       
-      // Refresh bookings list
+      // Refresh bookings list to show new booking
       if (apiData.citizenId) {
+        console.log('Refreshing bookings for user:', apiData.citizenId)
         await fetchBookings({ citizenId: apiData.citizenId })
       }
 
@@ -136,8 +142,9 @@ export function useBookings() {
 
   // Fetch my bookings (alias)
   const fetchMyBookings = async () => {
-    // TODO: Get actual user ID from auth
-    return fetchBookings({ citizenId: 'current-user-id' })
+    const citizenId = user?.email === 'citizen@helpmeanytime.gr' ? 'user-citizen-1' : user?.email || 'user-citizen-1'
+    console.log('Fetching bookings for citizen:', citizenId)
+    return fetchBookings({ citizenId })
   }
 
   // Get bookings by status

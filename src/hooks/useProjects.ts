@@ -1,87 +1,158 @@
-// ============================================
-// 👨‍💻 DEVELOPER 1 - TASK 3 (Hour 4-6)
-// ============================================
-// 
-// Custom hook για Projects - ΥΠΑΡΧΕΙ ΗΔΗ SKELETON! ✅
-//
-// ΤΙ ΠΡΕΠΕΙ ΝΑ ΚΑΝΕΙΣ:
-// 1. Συμπλήρωσε το useEffect να κάνει fetch:
-//    - Call GET /api/projects με filters
-//    - Handle loading & error states
-//
-// 2. Πρόσθεσε functions (αν δεν υπάρχουν):
-//    - createProject(data) -> POST /api/projects
-//    - updateProject(id, data) -> PATCH /api/projects/[id]
-//    - deleteProject(id) -> DELETE /api/projects/[id]
-//
-// 3. Return όλα αυτά στο hook
-//
-// ΠΑΡΑΔΕΙΓΜΑ ΧΡΗΣΗΣ:
-// const { projects, loading, createProject } = useProjects()
-//
-// ΧΡΟΝΟΣ: Μέρος των 4 ωρών
-// ============================================
-
-// Custom React hooks
+// Hook για διαχείριση Projects (Δημόσια Έργα)
+'use client'
 
 import { useState, useEffect } from 'react'
 
+export interface Project {
+  id: string
+  title: string
+  description: string
+  category: string
+  status: string
+  location?: {
+    lat: number
+    lng: number
+    address: string
+    district: string
+  }
+  creatorId: string
+  budgetNeeded?: number
+  budgetPledged?: number
+  municipalityApproved: boolean
+  createdAt: string | Date
+  updatedAt: string | Date
+}
+
 // Hook for fetching projects
 export function useProjects(filters?: any) {
-  const [projects, setProjects] = useState([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchProjects = async (customFilters?: any) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Build query string
+      const params = new URLSearchParams()
+      const activeFilters = customFilters || filters
+      
+      if (activeFilters?.category) params.append('category', activeFilters.category)
+      if (activeFilters?.status) params.append('status', activeFilters.status)
+      if (activeFilters?.district) params.append('district', activeFilters.district)
+
+      const url = `/api/projects${params.toString() ? `?${params.toString()}` : ''}`
+      const response = await fetch(url)
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects')
+      }
+
+      const data = await response.json()
+      // API returns array directly, not wrapped in { projects: [...] }
+      const projectsData = Array.isArray(data) ? data : (data.projects || [])
+      setProjects(projectsData)
+      console.log('✅ Fetched projects:', projectsData.length)
+      return projectsData
+    } catch (err: any) {
+      setError(err.message)
+      console.error('Error fetching projects:', err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createProject = async (projectData: {
+    title: string
+    description: string
+    category: string
+    location?: string
+    budgetNeeded?: number
+  }) => {
+    try {
+      setError(null)
+
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create project')
+      }
+
+      const data = await response.json()
+      
+      // Refresh projects list
+      await fetchProjects()
+      
+      return data
+    } catch (err: any) {
+      setError(err.message)
+      throw err
+    }
+  }
 
   useEffect(() => {
-    // Fetch projects logic
-  }, [filters])
+    fetchProjects()
+  }, [])
 
-  return { projects, loading, error }
+  return { 
+    projects, 
+    loading, 
+    error,
+    fetchProjects,
+    createProject,
+    setProjects
+  }
 }
 
 // Hook for fetching single project
 export function useProject(id: string) {
-  const [project, setProject] = useState(null)
+  const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchProject = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch(`/api/projects/${id}`)
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch project')
+      }
+
+      const data = await response.json()
+      setProject(data.project)
+      return data
+    } catch (err: any) {
+      setError(err.message)
+      console.error('Error fetching project:', err)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // Fetch project logic
+    if (id) {
+      fetchProject()
+    }
   }, [id])
 
-  return { project, loading, error }
-}
-
-// Hook for user authentication
-export function useAuth() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // Check auth status
-  }, [])
-
-  return { user, loading }
-}
-
-// Hook for window size (responsive design)
-export function useWindowSize() {
-  const [windowSize, setWindowSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
-  })
-
-  useEffect(() => {
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  return windowSize
+  return { 
+    project, 
+    loading, 
+    error,
+    fetchProject,
+    setProject
+  }
 }

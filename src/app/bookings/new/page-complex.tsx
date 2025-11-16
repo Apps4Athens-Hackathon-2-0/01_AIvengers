@@ -216,13 +216,13 @@ function BookingFormContent() {
     }
 
     const bookingData = {
-      citizenId: user?.email || 'user-citizen-1',
+      citizenId: 'user-citizen-1', // Add the demo citizen ID
       professionalId: selectedProfessionalId,
       serviceType: selectedProfessional?.profession || 'general',
-      scheduledDate: appointmentDate,
-      scheduledTime: appointmentTime,
-      durationHours: estimatedHours,
-      address: serviceAddress,
+      appointmentDate: `${appointmentDate}T${appointmentTime}`,
+      estimatedHours,
+      serviceAddress,
+      phoneNumber,
       description,
     }
 
@@ -474,7 +474,7 @@ function BookingFormContent() {
               {/* Description */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Περιγραφή Εργασίας
+                  Περιγραφή Εργασίας (προαιρετικό)
                 </label>
                 <textarea
                   value={description}

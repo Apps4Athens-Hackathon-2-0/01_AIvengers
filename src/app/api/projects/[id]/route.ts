@@ -1,71 +1,101 @@
-// ============================================
-// 👨‍💻 DEVELOPER 1 - TASK 3 & 4 (Hour 4-8)
-// ============================================
-// 
-// ΤΙ ΠΡΕΠΕΙ ΝΑ ΚΑΝΕΙΣ ΣΤΟ GET:
-// 1. Πάρε το project_id από το URL (params.id)
-// 2. SELECT * FROM projects WHERE id = params.id
-// 3. Πάρε ΚΑΙ τα pledges του project:
-//    SELECT * FROM pledges WHERE project_id = params.id
-// 4. Return: { project: {...}, pledges: [...] }
-//
-// ΤΙ ΠΡΕΠΕΙ ΝΑ ΚΑΝΕΙΣ ΣΤΟ PATCH:
-// 1. Πάρε το project_id από το URL
-// 2. Πάρε τα νέα δεδομένα από request.json()
-// 3. Έλεγξε ότι ο user είναι ο creator του project
-// 4. UPDATE projects SET ... WHERE id = params.id
-// 5. Return: { success: true, project: {...} }
-//
-// ΤΙ ΠΡΕΠΕΙ ΝΑ ΚΑΝΕΙΣ ΣΤΟ DELETE:
-// 1. Πάρε το project_id
-// 2. Έλεγξε ότι ο user είναι ο creator
-// 3. DELETE FROM projects WHERE id = params.id
-// 4. Return: { success: true }
-//
-// TESTING:
-// curl http://localhost:3000/api/projects/1
-// curl -X PATCH http://localhost:3000/api/projects/1 -d '{"title":"Updated"}'
-// curl -X DELETE http://localhost:3000/api/projects/1
-//
-// ΧΡΟΝΟΣ: Μέρος των 4 ωρών
-// ============================================
-
-// API route for individual project operations
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // TODO: Πάρε το project με id = params.id
-  
-  // TODO: Πάρε ΚΑΙ τα pledges του
-  
-  // TODO: Return τα δεδομένα
-  
-  return NextResponse.json({ project: null })
+  try {
+    const id = params.id
+
+    // Get projects from global store
+    const projects = globalThis.projectsStore || []
+    const project = projects.find((p: any) => p.id === id)
+
+    if (!project) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(project)
+  } catch (error) {
+    console.error('Error fetching project:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch project' },
+      { status: 500 }
+    )
+  }
 }
 
-export async function PATCH(
+export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // TODO: Πάρε τα νέα δεδομένα
-  
-  // TODO: Validate ownership (είναι δικό μου το project;)
-  
-  // TODO: UPDATE το project
-  
-  return NextResponse.json({ success: true })
+  try {
+    const id = params.id
+    const body = await request.json()
+
+    // Get projects from global store
+    const projects = globalThis.projectsStore || []
+    const projectIndex = projects.findIndex((p: any) => p.id === id)
+
+    if (projectIndex === -1) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      )
+    }
+
+    // Update project
+    const updatedProject = {
+      ...projects[projectIndex],
+      ...body,
+      updatedAt: new Date().toISOString().split('T')[0]
+    }
+
+    projects[projectIndex] = updatedProject
+    globalThis.projectsStore = projects
+
+    console.log('✅ Updated project:', updatedProject.title)
+
+    return NextResponse.json(updatedProject)
+  } catch (error) {
+    console.error('Error updating project:', error)
+    return NextResponse.json(
+      { error: 'Failed to update project' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // TODO: Validate ownership
-  
-  // TODO: DELETE το project
-  
-  return NextResponse.json({ success: true })
+  try {
+    const projectId = params.id
+    const initialCount = globalThis.projectsStore.length
+
+    // Find project index
+    const projectIndex = globalThis.projectsStore.findIndex(p => p.id === projectId)
+
+    if (projectIndex === -1) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+
+    // Remove project from store
+    globalThis.projectsStore.splice(projectIndex, 1)
+
+    console.log(`🗑️ Deleted project with ID: ${projectId}`)
+    console.log(`📦 Projects in store before: ${initialCount}, after: ${globalThis.projectsStore.length}`)
+
+    return NextResponse.json({ message: 'Project deleted successfully' }, { status: 200 })
+  } catch (error) {
+    console.error('Error deleting project:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete project' },
+      { status: 500 }
+    )
+  }
 }
